@@ -1,9 +1,18 @@
 import os
 import sys
+import numpy as np
+from math import cos, sin
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/..')
 from values import *
+from IO import *
 
+def zRotMatrix(zrot):
+	c, s = cos(zrot), sin(zrot)
+	return np.array([[c, -s, 0],
+					 [s,  c, 0],
+					 [0,  0, 1]], np.float32)
+					 
 def quads2tris(F):
 	out = []
 	for f in F:
@@ -24,6 +33,7 @@ for i,sample in enumerate(samples):
 		for i,g in enumerate(garments):
 			f.write(g + '\n')
 	# merge rest garments into single outfit
+	zrot = loadInfo(src + 'info.mat')['zrot']
 	V, F = None, None
 	for g in enumerate(garments):
 		v, f, _, _ = readOBJ(src + garment + '.obj')
@@ -35,5 +45,6 @@ for i,sample in enumerate(samples):
 			n = V.shape[0]
 			V = np.concatenate((V, v), axis=0)
 			F = np.concatenate((F, f + n), axis=0)
+	V = (np.linalg.inv(zRotMatrix(zrot)) @ V.T).T
 	writePC2(dst + 'rest.pc16', V[None], True)
 	writeFaceBIN(dst + 'faces.bin', F)
