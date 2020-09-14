@@ -82,12 +82,11 @@ for epoch in range(num_epochs):
 			L_collision, E_collision = collision_loss(pred, body, model.SMPL[0].faces, batch['indices'])
 			loss = L_edge + .005 * L_bend + L_collision
 			# unsupervised prior
-			L_prior_weight = 10 ** (2 - epoch)
-			if epoch < 5:
-				L_prior = tf.reduce_sum((model.W - batch['weights_prior'])**2)
-				L_prior += weights_smoothness(model.W, batch['laplacians'])
-				L_prior += tf.reduce_sum(model.D ** 2)
-				loss += L_prior_weight * L_prior
+			L_balance = 10 ** ((epoch - 4) / 2)
+			L_prior = tf.reduce_sum((model.W - batch['weights_prior'])**2)
+			L_prior += weights_smoothness(model.W, batch['laplacians'])
+			L_prior += tf.reduce_sum(model.D ** 2)
+			loss = L_balance * loss + L_prior
 		""" Backprop """
 		grads = tape.gradient(loss, tgts)
 		# Few batches and sum of gradients (for insufficient VRAM)
